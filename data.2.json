@@ -1,0 +1,34 @@
+{
+   "data visualization": [
+        {
+            "id": 1,
+            "title": "VESTA 3for three-dimensional visualization of crystal, volumetric and morphology data",
+            "abstract": "VESTA is a three-dimensional visualization system for crystallographic studies and electronic state calculations. It has been upgraded to the latest version, VESTA 3, implementing new features including drawing the external mor­phology of crystals; superimposing multiple structural models, volumetric data and crystal faces; calculation of electron and nuclear densities from structure parameters; calculation of Patterson functions from structure parameters or volumetric data; integration of electron and nuclear densities by Voronoi tessellation; visualization of isosurfaces with multiple levels; determination of the best plane for selected atoms; an extended bond-search algorithm to enable more sophisticated searches in complex molecules and cage-like structures; undo and redo in graphical user interface operations; and significant performance improvements in rendering isosurfaces and calculating slices."
+        },
+        {
+            "id": 2,
+            "title": "Visualization and analysis of atomistic simulation data with OVITO–the Open Visualization Tool",
+            "abstract": "The Open Visualization Tool (OVITO) is a new 3D visualization software designed for post-processing atomistic data obtained from molecular dynamics or Monte Carlo simulations. Unique analysis, editing and animations functions are integrated into its easy-to-use graphical user interface. The software is written in object-oriented C++, controllable via Python scripts and easily extendable through a plug-in interface. It is distributed as open-source software and can be downloaded from the website http://ovito.sourceforge.net/."
+        },
+        {
+            "id": 3,
+            "title": "Processing of X-ray diffraction data collected in oscillation mode",
+            "abstract": "X-ray data can be collected with zero-, one-, and two-dimensional detectors, zero-dimensional (single counter) being the simplest and two-dimensional the most efficient in terms of measuring diffracted X-rays in all directions. To analyze the single-crystal diffraction data collected with these detectors, several computer programs have been developed. Two-dimensional detectors and related software are now predominantly used to measure and integrate diffraction from single crystals of biological macromolecules. Macromolecular crystallography is an iterative process. To monitor the progress, the HKL package provides two tools: (1) statistics, both weighted (χ2) and unweighted (R-merge), where the Bayesian reasoning and multicomponent error model helps obtain proper error estimates and (2) visualization of the process, which helps an operator to confirm that the process of data reduction, including the resulting statistics, is correct and allows the evaluation of the problems for which there are no good statistical criteria. Visualization also provides confidence that the point of diminishing returns in data collection and reduction has been reached. At that point, the effort should be directed to solving the structure. The methods presented in the chapter have been applied to solve a large variety of problems, from inorganic molecules with 5 Å unit cell to rotavirus of 700 Å diameters crystallized in 700 × 1000 × 1400 Å cell."
+        },
+        {
+            "id": 4,
+            "title": "deepTools2: a next generation web server for deep-sequencing data analysis",
+            "abstract": "We present an update to our Galaxy-based web server for processing and visualizing deeply sequenced data. Its core tool set, deepTools, allows users to perform complete bioinformatic workflows ranging from quality controls and normalizations of aligned reads to integrative analyses, including clustering and visualization approaches. Since we first described our deepTools Galaxy server in 2014, we have implemented new solutions for many requests from the community and our users. Here, we introduce significant enhancements and new tools to further improve data visualization and interpretation. deepTools continue to be open to all users and freely available as a web service at deeptools.ie-freiburg.mpg.de. The new deepTools2 suite can be easily deployed within any Galaxy framework via the toolshed repository, and we also provide source code for command line usage under Linux and Mac OS X. A public and documented API for access to deepTools functionality is also available."
+        },
+        {
+            "id": 5,
+            "title": "Integrative Genomics Viewer (IGV): high-performance genomics data visualization and exploration",
+            "abstract": "Data visualization is an essential component of genomic data analysis. However, the size and diversity of the data sets produced by today’s sequencing and array-based profiling methods present major challenges to visualization tools. The Integrative Genomics Viewer (IGV) is a high-performance viewer that efficiently handles large heterogeneous data sets, while providing a smooth and intuitive user experience at all levels of genome resolution. A key characteristic of IGV is its focus on the integrative nature of genomic studies, with support for both array-based and next-generation sequencing data, and the integration of clinical and phenotypic data. Although IGV is often used to view genomic data from public sources, its primary emphasis is to support researchers who wish to visualize and explore their own data sets or those from colleagues. To that end, IGV supports flexible loading of local and remote data sets, and is optimized to provide high-performance data visualization and exploration on standard desktop systems. IGV is freely available for download from http://www.broadinstitute.org/igv, under a GNU LGPL open-source license."
+        },
+        {
+            "id": 6,
+            "title": "Dimensionality reduction for visualizing single-cell data using UMAP",
+            "abstract": "Advances in single-cell technologies have enabled high-resolution dissection of tissue composition. Several tools for dimensionality reduction are available to analyze the large number of parameters generated in single-cell studies. Recently, a nonlinear dimensionality-reduction technique, uniform manifold approximation and projection (UMAP), was developed for the analysis of any type of high-dimensional data. Here we apply it to biological data, using three well-characterized mass cytometry and single-cell RNA sequencing datasets. Comparing the performance of UMAP with five other tools, we find that UMAP provides the fastest run times, highest reproducibility and the most meaningful organization of cell clusters. The work highlights the use of UMAP for improved visualization and interpretation of single-cell data."
+        }
+    ]
+}

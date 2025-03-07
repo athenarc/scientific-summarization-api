@@ -3,10 +3,10 @@ import json
 from pprint import pprint
 import textwrap
 import yaml
-import torch
 import requests
 from dotenv import load_dotenv
 import os
+from openai import Client
 
 
 def load_prompts(yaml_file='system_prompts.yaml'):
@@ -16,7 +16,7 @@ def load_prompts(yaml_file='system_prompts.yaml'):
     return prompts
 
 
-def open_data_file(data_file):
+def read_data_file(data_file):
     """Open a JSON data file and return its contents as a dictionary."""
 
     with open(data_file, 'r', encoding='utf-8') as file:
@@ -24,22 +24,21 @@ def open_data_file(data_file):
     return data
 
 
-def initialize_model(model_name):
-    """Initialize the model and tokenizer for the given model name."""
+def initialize_client(host, port, api_key):
+    """Initialize the OpenAI client."""
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype="auto",
-        device_map="auto"
+    client = Client(
+        base_url=f"{host}:{port}/v1/",
+        api_key=api_key
     )
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
     
-    return model, tokenizer
+    return client
 
 
-def bip_api_request(keywords, auth_token, page_size=5):
+def bip_api_request(bip_url, keywords, auth_token, page_size=5):
     """Make a request to the BIP API to search for papers based on keywords."""
-    url = f"https://bip-api.imsi.athenarc.gr/paper/search?keywords={keywords}&page=1&page_size={page_size}&auth_token={auth_token}"
+
+    url = f"{bip_url}/paper/search?keywords={keywords}&page=1&page_size={page_size}&auth_token={auth_token}"
 
     payload = {}
     headers = {}
@@ -96,48 +95,37 @@ def get_topic_stats(topic, papers):
     print(f"Number of papers in topic: {num_papers}")
 
 
-def get_number_of_tokens(tokenizer, system_prompt, papers, text):
+def get_number_of_tokens(response, usage):
     """Calculate the number of tokens for the system prompt, papers, and text."""
 
-    system_prompt_tokens = tokenizer.tokenize(system_prompt)
-    paper_tokens = tokenizer.tokenize(papers)
-    output_tokens = tokenizer.tokenize(text)
-    total_words = len(text.split())
-    total_tokens = len(system_prompt_tokens) + len(paper_tokens) + len(output_tokens)
+    prompt_tokens = usage.prompt_tokens
+    response_tokens = usage.completion_tokens
+    total_tokens = usage.total_tokens
+    total_words = len(response.split())
+    total_tokens = prompt_tokens + response_tokens
     
-    print(f"Number of tokens in system prompt: {len(system_prompt_tokens)}")
-    print(f"Number of tokens in papers: {len(paper_tokens)}")
-    print(f"Number of tokens in output: {len(output_tokens)}")
+    print(f"Number of tokens in prompt: {prompt_tokens}")
+    print(f"Number of tokens in output: {response_tokens}")
     print(f"Total number of words in output: {total_words}")
     print(f"Total number of tokens: {total_tokens}")
 
 
-def generate_response(model, tokenizer, messages):
+def generate_response(client, messages, model="tgi"):
     """Generate a response from the model based on the provided messages."""
 
-    text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
-    
-    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
-
-    generated_ids = model.generate(
-        **model_inputs,
-        max_new_tokens=1000,
-    #     num_return_sequences=1,
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        stream=False,
+        max_tokens=1000,
         temperature=0.7,
-        do_sample=True,
         top_p=0.95
     )
-    generated_ids = [
-        output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-    ]
-    
-    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    
-    return response
+
+    usage = response.usage
+    response = response.choices[0].message.content
+
+    return response, usage
 
 
 def pretty_print_model_response(topic, papers, response, width=100, new_response=False):
@@ -169,7 +157,7 @@ def pretty_print_model_response(topic, papers, response, width=100, new_response
     print("="*width + "\n")
 
 
-def rewrite_request(model, tokenizer, system_prompt, summary, word_limit=250):
+def rewrite_request(client, system_prompt, summary, word_limit=250, model="tgi"):
     """Generate a shorter summary if the word limit is exceeded."""
 
     rewrite_request = f"""
@@ -185,24 +173,34 @@ def rewrite_request(model, tokenizer, system_prompt, summary, word_limit=250):
         {"role": "user", "content": rewrite_request}
     ]
 
-    response = generate_response(model, tokenizer, messages)
+    response, usage = generate_response(
+        client=client,
+        messages=messages, 
+        model=model
+    )
     
-    return response
+    return response, usage
 
 
-def get_summary(system_prompt, model, tokenizer, request_origin, data_input, response_only=False, print_response=True, show_papers=False, word_limit=250):
+def get_summary(system_prompt, client, data_input, request_origin="api", model="tgi", response_only=False, print_response=True, show_papers=False, word_limit=250):
     """Generate a summary based on the provided system prompt, model, and tokenizer."""
 
     # Load data based on origin
     if request_origin == 'api':
         data = {
-            data_input: bip_api_request(data_input, auth_token=os.getenv("BIP_AUTH_TOKEN"))['rows']
+            data_input: bip_api_request(
+                bip_url=os.getenv("BIP_URL"), 
+                keywords=data_input,
+                auth_token=os.getenv("BIP_AUTH_TOKEN"))['rows']
         }
     elif request_origin == 'file':
-        data = open_data_file(data_input)
+        data = read_data_file(data_input)
     
     # Create conversation messages for each topic
-    topic_messages = create_conversation_messages(system_prompt, data)
+    topic_messages = create_conversation_messages(
+        system_prompt=system_prompt,
+        data=data
+    )
     
     # Store results for all topics
     results = {}
@@ -211,37 +209,62 @@ def get_summary(system_prompt, model, tokenizer, request_origin, data_input, res
         papers = data[topic]
         
         # Generate initial response
-        response = generate_response(model, tokenizer, messages)
+        response, usage = generate_response(
+            client=client,
+            messages=messages,
+            model=model)
         total_words = len(response.split())
 
         # Display information based on parameters
         if print_response:
             # Show topic statistics if not response_only
             if not response_only:
-                get_topic_stats(topic, papers)
+                get_topic_stats(
+                    topic=topic,
+                    papers=papers
+                )
                 if show_papers:
                     print(format_papers_for_topic(papers))
             
             # Print the initial response
-            pretty_print_model_response(topic, papers, response)
+            pretty_print_model_response(
+                topic=topic,
+                papers=papers, 
+                response=response
+            )
 
             if not response_only:
-                get_number_of_tokens(tokenizer, system_prompt, 
-                                    format_papers_for_topic(papers), response)
+                get_number_of_tokens(
+                    response=response,
+                    usage=usage
+                )
             
             # If verbose and we had to rewrite, show this was an updated response
             if total_words > word_limit:
-                response = rewrite_request(model, tokenizer, system_prompt, response, word_limit)
+                response, usage = rewrite_request(
+                    client=client,
+                    system_prompt=system_prompt,
+                    summary=response,
+                    word_limit=word_limit,
+                    model=model
+                )
                 
                 if print_response:
                     print(f"\nThe summary exceeds the word limit of {word_limit} words.")
-                    pretty_print_model_response(topic, papers, response, new_response=True)
+                    pretty_print_model_response(
+                        topic=topic,
+                        papers=papers,
+                        response=response, 
+                        new_response=True
+                    )
                     
                     # Show token counts for rewritten response if not in response_only mode
                     if not response_only:
-                        get_number_of_tokens(tokenizer, system_prompt, 
-                                            format_papers_for_topic(papers), response)
-        
+                        get_number_of_tokens(
+                            response=response,
+                            usage=usage
+                        )
+
         # Store the result
         results[topic] = response
     

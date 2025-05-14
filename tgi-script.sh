@@ -1,3 +1,5 @@
+# TGI local server launch script
+
 model=Qwen/Qwen2.5-14B-Instruct-1M
 volume=~/.cache/huggingface/hub # share a volume with the Docker container to avoid downloading weights every run
 

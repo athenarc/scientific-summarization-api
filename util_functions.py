@@ -1,6 +1,4 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import json
-from pprint import pprint
 import textwrap
 import yaml
 import requests

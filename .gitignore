@@ -204,3 +204,4 @@ ehthumbs_vista.db
 # Project specific
 log/
 *.log
+data-api-samples/

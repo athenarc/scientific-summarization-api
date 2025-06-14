@@ -135,9 +135,9 @@ class SummarizationRequest(BaseModel):
         examples=["AI in Healthcare", "Climate Change Research"]
     )
     prompt_key: Optional[str] = Field(
-        default="single_paragraph", 
-        description="The prompt strategy to use from system_prompts.yaml",
-        examples=["single_paragraph", "two_paragraph", "strict_250"]
+        default=None, 
+        description="The prompt strategy to use from system_prompts.yaml. If not specified, automatically uses 'single_paragraph' for ≤5 papers or 'lit_review' for >5 papers",
+        examples=["single_paragraph", "lit_review", "strict_250"]
     )
 
 class ReferenceItem(BaseModel):
@@ -488,6 +488,12 @@ async def summarize_papers_endpoint(
     
     This endpoint accepts a collection of scientific papers and generates
     a coherent summary using AI models with proper citations.
+    
+    Prompt selection behavior:
+    - If prompt_key is not specified, automatically selects:
+      * "single_paragraph" for 5 or fewer papers
+      * "lit_review" for more than 5 papers
+    - If prompt_key is provided, uses the specified prompt regardless of paper count
     """
     start_time = time.time()
     logger.info(f"Received summarization request for {len(request_data.papers)} papers with topic '{request_data.topic_name}'")
@@ -505,7 +511,15 @@ async def summarize_papers_endpoint(
             detail=f"Too many papers provided. Maximum allowed: {config.max_papers}, received: {len(request_data.papers)}"
         )
 
-    selected_prompt_key = request_data.prompt_key or "single_paragraph"
+    # Automatically select prompt based on number of papers if not explicitly provided
+    if request_data.prompt_key:
+        selected_prompt_key = request_data.prompt_key
+        logger.info(f"Using explicitly requested prompt: '{selected_prompt_key}'")
+    else:
+        # Use "lit_review" for more than 5 papers, "single_paragraph" for 5 or fewer
+        selected_prompt_key = "lit_review" if len(request_data.papers) > 5 else "single_paragraph"
+        logger.info(f"Auto-selected prompt '{selected_prompt_key}' based on {len(request_data.papers)} papers")
+    
     system_prompt_content = prompts_manager.get_prompt_content(selected_prompt_key)
 
     # Format papers and create AI messages

@@ -175,3 +175,53 @@ prompts:
       - Multiple citations should be listed in ascending order, separated by commas: [1,3,4]
 
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
+
+  lit_review:
+    name: "Literature Review"
+    content: |
+      Generate a focused academic summary from the following research papers' titles and abstracts. Follow these specific guidelines:
+
+      1. Input Format:
+      For each paper, you will receive:
+      - ID: [Paper ID number]
+      - Title: [Paper Title]
+      - Abstract: [Paper Abstract]
+
+      2. Structure and Style:
+      - Write 3-4 well-developed paragraphs (400-500 words total)
+      - Begin with a paragraph that:
+        * Sets the context of the research area
+        * Identifies key themes or challenges
+        * Establishes the scope of discussion
+      - Follow with body paragraphs that:
+        * Group related studies and findings thematically
+        * Compare and contrast methodologies
+        * Highlight research progression and knowledge gaps
+      - Conclude with a paragraph that:
+        * Synthesizes major findings
+        * Identifies trends or patterns
+        * Suggests potential research directions
+
+      3. Academic Requirements:
+      - Maintain scholarly tone and critical analysis
+      - Emphasize relationships between studies
+      - Identify theoretical frameworks where present
+      - Note methodological strengths and limitations
+      - Highlight consensus and contradictions in findings
+      - Only use information explicitly stated in the provided abstracts
+
+      4. Integration and Flow:
+      - Create smooth transitions between topics and papers
+      - Build a coherent narrative that shows how the field has developed
+      - Balance description with analysis
+      - Group papers by themes rather than discussing them sequentially
+      - Synthesize findings rather than merely summarizing each paper
+
+      5. Citation Rules:
+      - Every claim must be supported by at least one citation using [n] format
+      - Use only the provided papers as sources
+      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4]
+      - Integrate citations naturally into the text
+      - Avoid excessive citation clustering
+
+      Begin directly with the content, avoiding any headers, labels, or formatting markers. Maintain academic integrity while avoiding information not present in the provided abstracts.

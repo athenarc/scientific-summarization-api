@@ -1,6 +1,7 @@
 prompts:
   comprehensive_300:
     name: "Comprehensive 300-word Summary"
+    description: "Detailed 300-word analysis with full context"
     content: |
       Analyze the following research papers' titles and abstracts to create a comprehensive summary. Follow these specific guidelines:
 
@@ -35,6 +36,7 @@ prompts:
 
   strict_300:
     name: "Strict 300-word Summary"
+    description: "Concise summaries with hard 300-word limit"
     content: |
       Analyze the following research papers' titles and abstracts to create a comprehensive summary. Follow these specific guidelines:
 
@@ -62,6 +64,7 @@ prompts:
 
   strict_250:
     name: "Strict 250-word Summary"
+    description: "250-word summaries in 2-3 paragraphs"
     content: |
       Analyze the following research papers' titles and abstracts to create a comprehensive summary. Follow these specific guidelines:
 
@@ -94,6 +97,7 @@ prompts:
 
   two_paragraph:
     name: "Two-Paragraph Summary"
+    description: "Methodology overview + key findings"
     content: |
       Analyze the following research papers' titles and abstracts to create a concise summary. Follow these specific guidelines:
 
@@ -114,16 +118,18 @@ prompts:
 
       3. Content Requirements:
       - Only use information explicitly stated in the provided abstracts
-      - Use numeric citations in square brackets [1], [2], etc., corresponding to the paper IDs
+      - Use citations in square brackets with EXACT paper ID numbers
       - Do not say "Paper [ID]", use only the [ID]
       - Focus on essential findings and critical connections between papers
       - Highlight only the most important themes and contradictions
       - Maintain academic tone and language
 
       4. Citation Rules:
-      - Every claim must be supported by at least one citation using [n] format
+      - Every claim must be supported by citations using the EXACT paper ID numbers provided
+      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
+      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
       - Use only the provided papers as sources
-      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4]
+      - Integrate citations naturally into the text
 
       5. Length Control:
       - Keep sentences concise and focused
@@ -135,6 +141,7 @@ prompts:
 
   single_paragraph:
     name: "Single-Paragraph Summary"
+    description: "Focused narrative-style summary"
     content: |
       Analyze the following research papers' titles and abstracts to create a focused single-paragraph summary. Follow these specific guidelines:
 
@@ -155,7 +162,7 @@ prompts:
 
       3. Content Requirements:
       - Only use information explicitly stated in the provided abstracts
-      - Use numeric citations in square brackets [1], [2], etc., corresponding to the paper IDs
+      - Use citations in square brackets with EXACT paper ID numbers
       - Do not say "Paper [ID]", use only the [ID]
       - Present only the most essential findings and connections
       - Highlight critical themes and contradictions
@@ -170,14 +177,17 @@ prompts:
       - Use active voice
 
       5. Citation Rules:
-      - Every claim must be supported by at least one citation using [n] format
+      - Every claim must be supported by citations using the EXACT paper ID numbers provided
+      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
+      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
       - Use only the provided papers as sources
-      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4]
+      - Integrate citations naturally into the text
 
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
 
   lit_review:
     name: "Literature Review"
+    description: ""
     content: |
       Generate a focused academic summary from the following research papers' titles and abstracts. Follow these specific guidelines:
 
@@ -218,10 +228,11 @@ prompts:
       - Synthesize findings rather than merely summarizing each paper
 
       5. Citation Rules:
-      - Every claim must be supported by at least one citation using [n] format
-      - Use only the provided papers as sources
-      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4]
+      - Every claim must be supported by citations using the EXACT paper ID numbers provided
+      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
+      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
       - Integrate citations naturally into the text
       - Avoid excessive citation clustering
+      - Do not modify, simplify, or renumber the original paper IDs
 
       Begin directly with the content, avoiding any headers, labels, or formatting markers. Maintain academic integrity while avoiding information not present in the provided abstracts.

@@ -103,14 +103,20 @@ class Paper(BaseModel):
     
     id: Union[str, int] 
     title: str = Field(..., min_length=1, max_length=500, description="The title of the paper")
-    abstract: str = Field(..., min_length=10, max_length=5000, description="The abstract of the paper")
+    abstract: str = Field(..., min_length=0, max_length=5000, description="The abstract of the paper")
     
-    @field_validator('title', 'abstract')
+    @field_validator('title')
     @classmethod
-    def validate_text_fields(cls, v: str) -> str:
-        """Ensure text fields are not just whitespace."""
+    def validate_title(cls, v: str) -> str:
+        """Ensure title is not empty or just whitespace."""
         if not v.strip():
             raise ValueError('Field cannot be empty or just whitespace')
+        return v.strip()
+    
+    @field_validator('abstract')
+    @classmethod
+    def validate_abstract(cls, v: str) -> str:
+        """Strip whitespace from abstract, allow empty abstracts."""
         return v.strip()
 
 class SummarizationRequest(BaseModel):
@@ -120,7 +126,7 @@ class SummarizationRequest(BaseModel):
     papers: List[Paper] = Field(
         ..., 
         min_length=1, 
-        max_length=50,
+        max_length=20,
         description="List of papers to summarize",
         examples=[[{
             "id": "1",

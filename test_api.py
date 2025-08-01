@@ -60,7 +60,7 @@ def test_prompts_endpoint() -> bool:
         print(f"✗ Prompts endpoint error: {e}")
         return False
 
-def test_summarization(prompt_key: str = "single_paragraph") -> bool:
+def test_summarization(prompt_key: str = "consice") -> bool:
     """Test the main summarization endpoint."""
     test_request = {
         "papers": TEST_PAPERS,
@@ -152,7 +152,7 @@ def main():
     tests = [
         ("Health Check", test_health_endpoint),
         ("Prompts Endpoint", test_prompts_endpoint),
-        ("Summarization (single_paragraph)", lambda: test_summarization("single_paragraph")),
+        ("Summarization (concise)", lambda: test_summarization("concise")),
         ("Summarization (two_paragraph)", lambda: test_summarization("two_paragraph")),
         ("Error Handling", test_error_handling),
     ]

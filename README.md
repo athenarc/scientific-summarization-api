@@ -2,7 +2,7 @@
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
-A FastAPI application that generates AI-powered summaries of scientific papers. This system analyzes collections of paper abstracts to produce coherent, well-structured summaries with academic citations, making it ideal for literature reviews, meta-analysis, and research monitoring.
+A FastAPI application that generates AI-powered summaries of multiple scientific papers. This system analyzes collections of paper abstracts to produce coherent, well-structured summaries with academic citations, making it ideal for literature reviews, meta-analysis, and research monitoring.
 
 ### Key Features
 
@@ -145,7 +145,7 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
     "completion_tokens": 320,
     "total_tokens": 770
   },
-  "prompt_used": "two_paragraph",
+  "prompt_used": "concise",
   "processing_time_seconds": 5.12
 }
 ```
@@ -237,13 +237,13 @@ The API uses different prompts to control the style and structure of the generat
 
 | `prompt_key`       | Description                                              | Best For                       |
 | :----------------- | :------------------------------------------------------- | :----------------------------- |
-| `single_paragraph` | A focused, narrative-style summary.                      | Quick overviews.               |
+| `concise` | A focused, narrative-style summary.                      | Quick overviews.               |
 | `two_paragraph`    | A summary split into methodology and key findings.       | Research presentations.        |
 | `lit_review`       | A 3-4 paragraph literature review (approx. 400-500 words). | Academic literature synthesis. |
 
 #### Automatic Prompt Selection
 If you do not provide a `prompt_key` in your request, the API will automatically select one based on the number of papers submitted:
--   **1-5 papers**: Uses `single_paragraph` for a concise summary.
+-   **1-5 papers**: Uses `concise` for a short summary.
 -   **6+ papers**: Uses `lit_review` for a more comprehensive synthesis.
 
 #### Custom Prompts
@@ -295,17 +295,6 @@ uvicorn summarizer_api:app --reload
 python test_api.py
 ```
 The test suite covers all primary API functionality, including all summarization strategies, input validation, and error handling scenarios.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1.  **Code Style**: Adhere to PEP 8 and format code with Black.
-2.  **Type Hints**: Add type annotations to all functions and methods.
-3.  **Testing**: Write or update tests for any new features or bug fixes.
-4.  **Documentation**: Keep the README and API docs up-to-date.
 
 ---
 

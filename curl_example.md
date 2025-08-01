@@ -32,7 +32,7 @@ The primary endpoint is `/summarize/`. The API automatically chooses the best su
 
 ### Example A: Quick Summary (Fewer than 6 Papers)
 
-When you provide a small number of papers, the API defaults to generating a concise, single-paragraph summary.
+When you provide a small number of papers, the API defaults to generating a concise summary.
 
 ```bash
 curl -X POST "http://localhost:8000/summarize/" \

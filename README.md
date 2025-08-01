@@ -9,7 +9,6 @@ A FastAPI application that generates AI-powered summaries of multiple scientific
 -   **Intelligent Summarization**: Utilizes multiple, distinct strategies to create summaries tailored for different use cases, from quick overviews to in-depth literature reviews.
 -   **Academic Citations**: Automatically formats summaries with proper, numbered in-text citations and a corresponding reference list.
 -   **Flexible AI Provider Support**: Compatible with OpenAI, DeepSeek, local model servers (TGI, vLLM, Ollama), and other OpenAI-compatible APIs.
--   **Production Ready**: Built with comprehensive logging, robust error handling, health monitoring endpoints, and a scalable Gunicorn deployment script.
 
 ---
 

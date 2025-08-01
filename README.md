@@ -30,7 +30,7 @@ First, clone the repository and install the required Python dependencies.
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd bip-scientific-summarization
+cd scientific-summarization-api
 
 # Install dependencies
 pip install -r requirements.txt

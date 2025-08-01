@@ -142,8 +142,8 @@ class SummarizationRequest(BaseModel):
     )
     prompt_key: Optional[str] = Field(
         default=None, 
-        description="The prompt strategy to use from system_prompts.yaml. If not specified, automatically uses 'single_paragraph' for ≤5 papers or 'lit_review' for >5 papers",
-        examples=["single_paragraph", "lit_review", "strict_250"]
+        description="The prompt strategy to use from system_prompts.yaml. If not specified, automatically uses 'concise' for ≤5 papers or 'lit_review' for >5 papers",
+        examples=["concise", "lit_review", "two_paragraph"]
     )
 
 class ReferenceItem(BaseModel):
@@ -497,7 +497,7 @@ async def summarize_papers_endpoint(
     
     Prompt selection behavior:
     - If prompt_key is not specified, automatically selects:
-      * "single_paragraph" for 5 or fewer papers
+      * "concise" for 5 or fewer papers
       * "lit_review" for more than 5 papers
     - If prompt_key is provided, uses the specified prompt regardless of paper count
     """
@@ -522,8 +522,8 @@ async def summarize_papers_endpoint(
         selected_prompt_key = request_data.prompt_key
         logger.info(f"Using explicitly requested prompt: '{selected_prompt_key}'")
     else:
-        # Use "lit_review" for more than 5 papers, "single_paragraph" for 5 or fewer
-        selected_prompt_key = "lit_review" if len(request_data.papers) > 5 else "single_paragraph"
+        # Use "lit_review" for more than 5 papers, "concise" for 5 or fewer
+        selected_prompt_key = "lit_review" if len(request_data.papers) > 5 else "concise"
         logger.info(f"Auto-selected prompt '{selected_prompt_key}' based on {len(request_data.papers)} papers")
     
     system_prompt_content = prompts_manager.get_prompt_content(selected_prompt_key)

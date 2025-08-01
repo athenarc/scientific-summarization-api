@@ -1,100 +1,4 @@
 prompts:
-  comprehensive_300:
-    name: "Comprehensive 300-word Summary"
-    description: "Detailed 300-word analysis with full context"
-    content: |
-      Analyze the following research papers' titles and abstracts to create a comprehensive summary. Follow these specific guidelines:
-
-      1. Input Format:
-      For each paper, you will receive:
-      - ID: [Paper ID number]
-      - Title: [Paper Title]
-      - Abstract: [Paper Abstract]
-
-      2. Summary Requirements:
-      - Generate a cohesive summary of approximately 300 words.
-      - Only use information explicitly stated in the provided abstracts.
-      - Use numeric citations in square brackets [1], [2], etc., corresponding to the paper IDs.
-      - Do not say "Paper [ID]", use only the [ID].
-      - Focus on key findings, methodologies, and connections between papers.
-      - Highlight common themes and potential contradictions.
-      - Maintain academic tone and language.
-
-      3. Citation Rules:
-      - Every claim must be supported by at least one citation using [n] format.
-      - Use only the provided papers as sources.
-      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4].
-
-      4. Structure:
-      - Begin with a brief overview of the research area.
-      - Group related findings and themes.
-      - Present methodological approaches.
-      - Discuss key conclusions.
-      - Identify potential gaps or areas of consensus.
-
-      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
-
-  strict_300:
-    name: "Strict 300-word Summary"
-    description: "Concise summaries with hard 300-word limit"
-    content: |
-      Analyze the following research papers' titles and abstracts to create a comprehensive summary. Follow these specific guidelines:
-
-      1. Input Format:
-      For each paper, you will receive:
-      - ID: [Paper ID number]
-      - Title: [Paper Title]
-      - Abstract: [Paper Abstract]
-
-      2. Summary Requirements:
-      - Generate a cohesive summary of up to 300 words (not exceeding this limit).
-      - Only use information explicitly stated in the provided abstracts.
-      - Use numeric citations in square brackets [1], [2], etc., corresponding to the paper IDs.
-      - Do not say "Paper [ID]", use only the [ID].
-      - Focus on key findings, methodologies, and connections between papers.
-      - Highlight common themes and potential contradictions.
-      - Maintain academic tone and language.
-
-      3. Citation Rules:
-      - Every claim must be supported by at least one citation using [n] format.
-      - Use only the provided papers as sources.
-      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4].
-
-      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
-
-  strict_250:
-    name: "Strict 250-word Summary"
-    description: "250-word summaries in 2-3 paragraphs"
-    content: |
-      Analyze the following research papers' titles and abstracts to create a comprehensive summary. Follow these specific guidelines:
-
-      1. Input Format:
-      For each paper, you will receive:
-      - ID: [Paper ID number]
-      - Title: [Paper Title]
-      - Abstract: [Paper Abstract]
-
-      2. Summary Requirements:
-      - Generate a cohesive summary of 200-250 words STRICTLY. Do not exceed 250 words under any circumstances.
-      - Structure the summary in 2-3 concise paragraphs.
-      - Only use information explicitly stated in the provided abstracts.
-      - Use numeric citations in square brackets [1], [2], etc., corresponding to the paper IDs.
-      - Do not say "Paper [ID]", use only the [ID].
-      - Focus on key findings, methodologies, and connections between papers.
-      - Highlight common themes and potential contradictions.
-      - Maintain academic tone and language.
-
-      3. Citation Rules:
-      - Every claim must be supported by at least one citation using [n] format.
-      - Use only the provided papers as sources.
-      - Multiple citations should be listed in ascending order, separated by commas: [1,3,4].
-
-      4. Length Enforcement:
-      - Before submitting the summary, count the words.
-      - If the word count exceeds 250, revise by removing less critical details while maintaining key findings.
-
-      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
-
   two_paragraph:
     name: "Two-Paragraph Summary"
     description: "Methodology overview + key findings"
@@ -139,8 +43,8 @@ prompts:
 
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
 
-  single_paragraph:
-    name: "Single-Paragraph Summary"
+  concise:
+    name: "Concise Summary"
     description: "Focused narrative-style summary"
     content: |
       Analyze the following research papers' titles and abstracts to create a focused single-paragraph summary. Follow these specific guidelines:

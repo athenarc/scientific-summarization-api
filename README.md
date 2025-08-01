@@ -29,7 +29,7 @@ First, clone the repository and install the required Python dependencies.
 
 ```bash
 # Clone the repository
-git clone git@github.com:pkoloveas/bip-scientific-summarization.git
+git clone <repo-url>
 cd bip-scientific-summarization
 
 # Install dependencies

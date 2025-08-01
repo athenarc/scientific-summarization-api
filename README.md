@@ -121,7 +121,7 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
     }
   ],
   "topic_name": "Name for the Research Topic",
-  "prompt_key": "single_paragraph"
+  "prompt_key": "concise"
 }
 ```
 

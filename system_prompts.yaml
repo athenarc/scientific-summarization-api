@@ -1,48 +1,4 @@
 prompts:
-  two_paragraph:
-    name: "Two-Paragraph Summary"
-    description: "Methodology overview + key findings"
-    content: |
-      Analyze the following research papers' titles and abstracts to create a concise summary. Follow these specific guidelines:
-
-      1. Input Format:
-      For each paper, you will receive:
-      - ID: [Paper ID number]
-      - Title: [Paper Title]
-      - Abstract: [Paper Abstract]
-
-      2. Summary Structure and Length:
-      - Write EXACTLY two paragraphs:
-        * First paragraph: A focused introduction and methodology overview
-        * Second paragraph: Key findings and conclusions
-      - Keep the summary BRIEF and CONCISE
-      - Prioritize only the most significant findings and connections
-      - Eliminate any redundant or secondary information
-      - Use short, clear sentences
-
-      3. Content Requirements:
-      - Only use information explicitly stated in the provided abstracts
-      - Use citations in square brackets with EXACT paper ID numbers
-      - Do not say "Paper [ID]", use only the [ID]
-      - Focus on essential findings and critical connections between papers
-      - Highlight only the most important themes and contradictions
-      - Maintain academic tone and language
-
-      4. Citation Rules:
-      - Every claim must be supported by citations using the EXACT paper ID numbers provided
-      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
-      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
-      - Use only the provided papers as sources
-      - Integrate citations naturally into the text
-
-      5. Length Control:
-      - Keep sentences concise and focused
-      - Avoid elaboration on minor points
-      - Use precise language instead of lengthy descriptions
-      - Eliminate redundant citations when multiple sources support the same point
-
-      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
-
   concise:
     name: "Concise Summary"
     description: "Focused narrative-style summary"
@@ -140,3 +96,47 @@ prompts:
       - Do not modify, simplify, or renumber the original paper IDs
 
       Begin directly with the content, avoiding any headers, labels, or formatting markers. Maintain academic integrity while avoiding information not present in the provided abstracts.
+  two_paragraph:
+    name: "Two-Paragraph Summary"
+    description: "Methodology overview + key findings"
+    content: |
+      Analyze the following research papers' titles and abstracts to create a concise summary. Follow these specific guidelines:
+
+      1. Input Format:
+      For each paper, you will receive:
+      - ID: [Paper ID number]
+      - Title: [Paper Title]
+      - Abstract: [Paper Abstract]
+
+      2. Summary Structure and Length:
+      - Write EXACTLY two paragraphs:
+        * First paragraph: A focused introduction and methodology overview
+        * Second paragraph: Key findings and conclusions
+      - Keep the summary BRIEF and CONCISE
+      - Prioritize only the most significant findings and connections
+      - Eliminate any redundant or secondary information
+      - Use short, clear sentences
+
+      3. Content Requirements:
+      - Only use information explicitly stated in the provided abstracts
+      - Use citations in square brackets with EXACT paper ID numbers
+      - Do not say "Paper [ID]", use only the [ID]
+      - Focus on essential findings and critical connections between papers
+      - Highlight only the most important themes and contradictions
+      - Maintain academic tone and language
+
+      4. Citation Rules:
+      - Every claim must be supported by citations using the EXACT paper ID numbers provided
+      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
+      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
+      - Use only the provided papers as sources
+      - Integrate citations naturally into the text
+
+      5. Length Control:
+      - Keep sentences concise and focused
+      - Avoid elaboration on minor points
+      - Use precise language instead of lengthy descriptions
+      - Eliminate redundant citations when multiple sources support the same point
+
+      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
+

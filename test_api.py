@@ -7,6 +7,7 @@ Tests basic functionality and error handling.
 import requests
 import json
 import sys
+from pathlib import Path
 from typing import Dict, Any
 
 # Test configuration
@@ -23,6 +24,13 @@ TEST_PAPERS = [
         "abstract": "As artificial intelligence systems become more prevalent in society, ethical considerations become increasingly important. This paper examines key ethical challenges including algorithmic bias, privacy concerns, transparency, and accountability. We propose a framework for ethical AI development that incorporates fairness metrics, explainability requirements, and stakeholder engagement throughout the development process."
     }
 ]
+
+SCHOLAR_SAMPLE_PATH = Path(__file__).resolve().parent / "data-api-samples" / "scholar-api-papers.json"
+
+def load_scholar_test_request() -> Dict[str, Any]:
+    """Load the scholar-mode sample request from disk."""
+    with SCHOLAR_SAMPLE_PATH.open("r", encoding="utf-8") as file:
+        return json.load(file)
 
 def test_health_endpoint() -> bool:
     """Test the health check endpoint."""
@@ -60,7 +68,7 @@ def test_prompts_endpoint() -> bool:
         print(f"✗ Prompts endpoint error: {e}")
         return False
 
-def test_summarization(prompt_key: str = "consice") -> bool:
+def test_summarization(prompt_key: str = "concise") -> bool:
     """Test the main summarization endpoint."""
     test_request = {
         "papers": TEST_PAPERS,
@@ -92,6 +100,43 @@ def test_summarization(prompt_key: str = "consice") -> bool:
             return False
     except requests.exceptions.RequestException as e:
         print(f"✗ Summarization test error: {e}")
+        return False
+
+def test_scholar_summarization(prompt_key: str) -> bool:
+    """Test scholar-profile summarization using the richer sample payload."""
+    try:
+        test_request = load_scholar_test_request()
+    except FileNotFoundError:
+        print(f"✗ Scholar sample file not found: {SCHOLAR_SAMPLE_PATH}")
+        return False
+    except json.JSONDecodeError as e:
+        print(f"✗ Scholar sample file is invalid JSON: {e}")
+        return False
+
+    test_request["prompt_key"] = prompt_key
+
+    try:
+        response = requests.post(
+            f"{BASE_URL}/summarize/",
+            json=test_request,
+            headers={"Content-Type": "application/json"}
+        )
+
+        if response.status_code == 200:
+            print(f"✓ Scholar summarization test passed (prompt: {prompt_key})")
+            summary_data = response.json()
+            print(f"  Topic: {summary_data.get('topic_name')}")
+            print(f"  Summary length: {len(summary_data.get('summary', '').split())} words")
+            print(f"  References: {len(summary_data.get('references', []))}")
+            print(f"  Prompt used: {summary_data.get('prompt_used')}")
+            print(f"  Summary preview: {summary_data.get('summary', '')[:120]}...")
+            return True
+
+        print(f"✗ Scholar summarization test failed: {response.status_code}")
+        print(f"  Error: {response.text}")
+        return False
+    except requests.exceptions.RequestException as e:
+        print(f"✗ Scholar summarization test error: {e}")
         return False
 
 def test_error_handling() -> bool:
@@ -129,6 +174,22 @@ def test_error_handling() -> bool:
     except Exception as e:
         print(f"✗ Error testing invalid data: {e}")
         return False
+
+    # Test invalid bare scholar prompt
+    try:
+        response = requests.post(
+            f"{BASE_URL}/summarize/",
+            json={"papers": TEST_PAPERS, "topic_name": "Scholar Test", "prompt_key": "scholar"},
+            headers={"Content-Type": "application/json"}
+        )
+        if response.status_code == 400:
+            print("✓ Bare scholar prompt validation working")
+        else:
+            print(f"✗ Expected 400 for bare scholar prompt, got {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"✗ Error testing bare scholar prompt: {e}")
+        return False
     
     return True
 
@@ -154,6 +215,8 @@ def main():
         ("Prompts Endpoint", test_prompts_endpoint),
         ("Summarization (concise)", lambda: test_summarization("concise")),
         ("Summarization (two_paragraph)", lambda: test_summarization("two_paragraph")),
+        ("Summarization (scholar-overview)", lambda: test_scholar_summarization("scholar-overview")),
+        ("Summarization (scholar-narrative)", lambda: test_scholar_summarization("scholar-narrative")),
         ("Error Handling", test_error_handling),
     ]
     

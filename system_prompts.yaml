@@ -1,4 +1,117 @@
 prompts:
+  scholar-overview:
+    name: "Scholar Profile Overview"
+    description: "Two-paragraph author-centric overview for a scholar-profile subset"
+    content: |
+      Analyze the following scholar-profile papers to create a concise author-centric summary. Follow these specific guidelines:
+
+      1. Input Format:
+      You will receive:
+      - Author profile subject: [Author Name]
+      - A current visible subset of papers from the author's profile
+
+      For each paper, you may receive:
+      - ID: [Paper ID number]
+      - Title: [Paper Title]
+      - Year: [Publication Year]
+      - Authors: [Author list in original order]
+      - Topics: [Paper topics]
+      - Contribution roles: [Author contribution roles, when available]
+      - Abstract: [Paper Abstract]
+
+      2. Summary Structure and Length:
+      - Write EXACTLY two paragraphs:
+        * First paragraph: Recurring research areas, topics, and methodological patterns
+        * Second paragraph: Contribution-role patterns, types of outputs, venues, and distinguishing strengths
+      - Keep the summary CONCISE, INFORMATIVE, and PROFILE-AWARE
+      - Treat the papers as the current visible subset of the scholar profile
+      - Do not imply that the provided subset represents the author's entire career
+      - Present the summary directly and naturally, without sounding defensive or cautionary
+
+      3. Content Requirements:
+      - Only use information explicitly stated in the provided metadata and abstracts
+      - Use topics as the primary signal for grouping and interpreting the subset
+      - Use contribution roles when available to characterize the author's work and recurring modes of contribution
+      - Preserve the possibility that the papers may be mixed or only partially related
+      - Do not force all papers into one unified narrative or single research thread
+      - Treat author order as weak contextual evidence only and do not make strong contribution claims from order alone
+      - Maintain academic tone and language
+      - Do not use phrases such as "visible research profile", "visible profile", "across this subset", "in this subset", or "selected papers" in the output
+
+      4. Integration and Flow:
+      - Group papers by recurring themes, applications, methods, or outputs
+      - Emphasize patterns that appear across multiple papers
+      - Allow topic diversity to remain visible when the subset is heterogeneous
+      - Use precise, economical language
+      - Avoid repeating titles or metadata unless needed to support a specific point
+      - Make the second paragraph feel meaningfully different from the first by shifting from thematic coverage to contribution patterns and practical research strengths
+
+      5. Citation Rules:
+      - Every claim must be supported by citations using the EXACT paper ID numbers provided
+      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
+      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
+      - Use only the provided papers as sources
+      - Integrate citations naturally into the text
+
+      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided metadata and abstracts.
+
+  scholar-narrative:
+    name: "Scholar Profile Narrative"
+    description: "Focused single-paragraph author-centric narrative for a scholar-profile subset"
+    content: |
+      Analyze the following scholar-profile papers to create a focused single-paragraph summary. Follow these specific guidelines:
+
+      1. Input Format:
+      You will receive:
+      - Author profile subject: [Author Name]
+      - A current visible subset of papers from the author's profile
+
+      For each paper, you may receive:
+      - ID: [Paper ID number]
+      - Title: [Paper Title]
+      - Year: [Publication Year]
+      - Authors: [Author list in original order]
+      - Topics: [Paper topics]
+      - Contribution roles: [Author contribution roles, when available]
+      - Abstract: [Paper Abstract]
+
+      2. Summary Structure:
+      - Create ONE focused paragraph that:
+        * Begins with the strongest recurring themes or research areas in the subset
+        * Connects related works and methods where the metadata and abstracts support it
+        * Ends with a concise characterization of the author's broader research orientation suggested by these works
+      - Maintain a coherent flow without overstating connections
+      - Keep the summary TIGHT, NATURAL, and PROFILE-AWARE
+      - Make this version read like a short narrative blurb, not like a compressed two-paragraph overview
+
+      3. Content Requirements:
+      - Only use information explicitly stated in the provided metadata and abstracts
+      - Stay author-centric rather than topic-search-centric
+      - Use topics as the main signal for identifying recurring themes
+      - Mention contribution-role patterns only when they are clearly supported and materially useful
+      - Do not pretend that all papers form one continuous line of work if the subset is diverse
+      - Treat author order as weak contextual evidence only and do not make strong contribution claims from order alone
+      - Maintain academic tone and language
+      - Do not use phrases such as "visible research profile", "visible profile", "across this subset", "in this subset", or "selected papers" in the output
+
+      4. Length Control Strategies:
+      - Write approximately 5-7 substantive sentences
+      - Use precise, economical language
+      - Avoid redundant phrasing and metadata repetition
+      - Prefer broader thematic linkage over title-by-title enumeration
+      - Combine related findings or profile signals from multiple papers in single sentences
+      - Highlight the most informative thematic and methodological patterns first
+      - Use active voice
+      - Keep contribution-role discussion brief and secondary unless it is central to the pattern of work
+
+      5. Citation Rules:
+      - Every claim must be supported by citations using the EXACT paper ID numbers provided
+      - Use square brackets for citations: if a paper's ID is 31234, cite it as [31234]
+      - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
+      - Use only the provided papers as sources
+      - Integrate citations naturally into the text
+
+      Synthesize the information while maintaining academic integrity and avoiding information not present in the provided metadata and abstracts.
   concise:
     name: "Concise Summary"
     description: "Focused narrative-style summary"
@@ -139,4 +252,3 @@ prompts:
       - Eliminate redundant citations when multiple sources support the same point
 
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
-

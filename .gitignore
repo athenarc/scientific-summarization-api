@@ -205,3 +205,5 @@ ehthumbs_vista.db
 logs/
 *.log
 data-api-samples/
+demo_scenario_summaries/
+A*.md

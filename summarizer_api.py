@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import yaml
 import time
@@ -40,6 +41,8 @@ def setup_logging():
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+SCHOLAR_PROMPT_KEYS = {"scholar-overview", "scholar-narrative"}
 
 # --- Load Environment Variables ---
 load_dotenv()  # Load environment variables from .env file
@@ -104,6 +107,10 @@ class Paper(BaseModel):
     id: Union[str, int] 
     title: str = Field(..., min_length=1, max_length=500, description="The title of the paper")
     abstract: str = Field(..., min_length=0, max_length=5000, description="The abstract of the paper")
+    year: Optional[Union[str, int]] = Field(default=None, description="The publication year")
+    authors: Optional[str] = Field(default=None, max_length=3000, description="The author list in original order")
+    topics: Optional[List[str]] = Field(default=None, description="Topics associated with the paper")
+    contribution_roles: Optional[List[str]] = Field(default=None, description="Contribution roles associated with the author")
     
     @field_validator('title')
     @classmethod
@@ -118,6 +125,24 @@ class Paper(BaseModel):
     def validate_abstract(cls, v: str) -> str:
         """Strip whitespace from abstract, allow empty abstracts."""
         return v.strip()
+
+    @field_validator('authors')
+    @classmethod
+    def validate_optional_string(cls, v: Optional[str]) -> Optional[str]:
+        """Normalize optional string fields and collapse empty values to None."""
+        if v is None:
+            return None
+        stripped = v.strip()
+        return stripped or None
+
+    @field_validator('topics', 'contribution_roles')
+    @classmethod
+    def validate_string_list(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Normalize optional string-list fields and drop empty entries."""
+        if v is None:
+            return None
+        cleaned_values = [item.strip() for item in v if item and item.strip()]
+        return cleaned_values or None
 
 class SummarizationRequest(BaseModel):
     """Defines the structure for the summarization request body."""
@@ -143,7 +168,7 @@ class SummarizationRequest(BaseModel):
     prompt_key: Optional[str] = Field(
         default=None, 
         description="The prompt strategy to use from system_prompts.yaml. If not specified, automatically uses 'concise' for ≤5 papers or 'lit_review' for >5 papers",
-        examples=["concise", "lit_review", "two_paragraph"]
+        examples=["concise", "lit_review", "two_paragraph", "scholar-overview", "scholar-narrative"]
     )
 
 class ReferenceItem(BaseModel):
@@ -358,6 +383,28 @@ def format_papers_for_prompt(papers: List[Paper]) -> str:
         formatted_output += "-" * 80 + "\n\n"
     return formatted_output
 
+def format_scholar_papers_for_prompt(author_name: str, papers: List[Paper]) -> str:
+    """Formats scholar-profile papers with richer metadata for scholar prompts."""
+    formatted_output = f"\nAuthor profile subject: {author_name}\n"
+    formatted_output += "Summarize only the papers provided below as the current visible subset of this scholar profile.\n\n"
+    formatted_output += "Papers to analyze:\n\n"
+
+    for paper in papers:
+        formatted_output += f"Paper ID: {paper.id}\n"
+        formatted_output += f"Title: {paper.title}\n"
+        if paper.year is not None:
+            formatted_output += f"Year: {paper.year}\n"
+        if paper.authors:
+            formatted_output += f"Authors: {paper.authors}\n"
+        if paper.topics:
+            formatted_output += f"Topics: {', '.join(paper.topics)}\n"
+        if paper.contribution_roles:
+            formatted_output += f"Contribution roles: {', '.join(paper.contribution_roles)}\n"
+        formatted_output += f"Abstract: {paper.abstract}\n"
+        formatted_output += "-" * 80 + "\n\n"
+
+    return formatted_output
+
 def create_ai_messages(system_prompt_content: str, formatted_papers: str) -> List[ChatCompletionMessageParam]:
     """Creates the message structure for the AI model using Pydantic models."""
     messages: List[ChatCompletionMessageParam] = [
@@ -365,6 +412,28 @@ def create_ai_messages(system_prompt_content: str, formatted_papers: str) -> Lis
         ChatCompletionUserMessageParam(role="user", content=formatted_papers)
     ]
     return messages
+
+def build_prompt_input(prompt_key: str, topic_name: str, papers: List[Paper]) -> str:
+    """Build the prompt input while preserving existing formatting for non-scholar prompts."""
+    if prompt_key in SCHOLAR_PROMPT_KEYS:
+        return format_scholar_papers_for_prompt(topic_name, papers)
+    return format_papers_for_prompt(papers)
+
+def serialize_request_payload(request_data: SummarizationRequest) -> str:
+    """Serialize the validated request payload for logging."""
+    return json.dumps(
+        request_data.model_dump(mode="json", exclude_none=True),
+        ensure_ascii=False
+    )
+
+def count_scholar_metadata_fields(papers: List[Paper]) -> Dict[str, int]:
+    """Count optional scholar metadata coverage across the provided papers."""
+    return {
+        "year": sum(1 for paper in papers if paper.year is not None),
+        "authors": sum(1 for paper in papers if paper.authors),
+        "topics": sum(1 for paper in papers if paper.topics),
+        "contribution_roles": sum(1 for paper in papers if paper.contribution_roles),
+    }
 
 def generate_ai_response(client: Client, messages: List[ChatCompletionMessageParam], model: str) -> tuple[str, Optional[CompletionUsage]]:
     """
@@ -502,7 +571,16 @@ async def summarize_papers_endpoint(
     - If prompt_key is provided, uses the specified prompt regardless of paper count
     """
     start_time = time.time()
-    logger.info(f"Received summarization request for {len(request_data.papers)} papers with topic '{request_data.topic_name}'")
+    requested_prompt_key = request_data.prompt_key or "auto"
+    scholar_metadata_coverage = count_scholar_metadata_fields(request_data.papers)
+    logger.info(
+        "Received summarization request | paper_count=%s topic_name=%r requested_prompt=%r metadata_coverage=%s",
+        len(request_data.papers),
+        request_data.topic_name,
+        requested_prompt_key,
+        scholar_metadata_coverage
+    )
+    logger.info("Summarization request payload: %s", serialize_request_payload(request_data))
     
     # Validate papers count
     if not request_data.papers:
@@ -525,11 +603,28 @@ async def summarize_papers_endpoint(
         # Use "lit_review" for more than 5 papers, "concise" for 5 or fewer
         selected_prompt_key = "lit_review" if len(request_data.papers) > 5 else "concise"
         logger.info(f"Auto-selected prompt '{selected_prompt_key}' based on {len(request_data.papers)} papers")
+
+    if selected_prompt_key == "scholar":
+        raise HTTPException(
+            status_code=400,
+            detail="Prompt key 'scholar' is not supported. Use 'scholar-overview' or 'scholar-narrative'."
+        )
     
     system_prompt_content = prompts_manager.get_prompt_content(selected_prompt_key)
+    logger.info(
+        "Summarization request routing | selected_prompt=%r paper_count=%s topic_name=%r",
+        selected_prompt_key,
+        len(request_data.papers),
+        request_data.topic_name
+    )
 
     # Format papers and create AI messages
-    formatted_papers_string = format_papers_for_prompt(request_data.papers)
+    formatted_papers_string = build_prompt_input(selected_prompt_key, request_data.topic_name, request_data.papers)
+    logger.info(
+        "Summarization prompt input prepared | selected_prompt=%r payload_characters=%s",
+        selected_prompt_key,
+        len(formatted_papers_string)
+    )
     ai_messages = create_ai_messages(system_prompt_content, formatted_papers_string)
 
     # Generate summary
@@ -547,7 +642,14 @@ async def summarize_papers_endpoint(
         )
 
     processing_time = time.time() - start_time
-    logger.info(f"Successfully generated summary for topic '{request_data.topic_name}' in {processing_time:.2f}s")
+    logger.info(
+        "Successfully generated summary | selected_prompt=%r topic_name=%r processing_time=%.2fs tokens=%s summary_characters=%s",
+        selected_prompt_key,
+        request_data.topic_name,
+        processing_time,
+        token_info.model_dump() if token_info else None,
+        len(summary_text)
+    )
     
     return SummarizationResponse(
         topic_name=request_data.topic_name,

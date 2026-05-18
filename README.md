@@ -117,7 +117,11 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
     {
       "id": "string | number",
       "title": "Paper Title (1-500 chars)",
-      "abstract": "Paper Abstract (0-5000 chars)"
+      "abstract": "Paper Abstract (0-5000 chars)",
+      "year": "Optional publication year",
+      "authors": "Optional author list in original order",
+      "topics": ["Optional topic", "Optional topic"],
+      "contribution_roles": ["Optional role", "Optional role"]
     }
   ],
   "topic_name": "Name for the Research Topic",
@@ -125,9 +129,9 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
 }
 ```
 
--   **`papers`**: A list of objects, each containing the `id`, `title`, and `abstract` of a paper.
--   **`topic_name`**: A descriptive name for the collection of papers.
--   **`prompt_key`** (Optional): The summarization strategy to use. If omitted, the API automatically selects a strategy based on the number of papers.
+-   **`papers`**: A list of objects, each containing `id`, `title`, and `abstract`. Scholar-profile requests may also include optional metadata such as `year`, `authors`, `topics`, and `contribution_roles`.
+-   **`topic_name`**: A descriptive name for the collection of papers. For scholar-profile requests, pass the author name here.
+-   **`prompt_key`** (Optional): The summarization strategy to use. If omitted, the API automatically selects a strategy based on the number of papers. For scholar profiles, use `scholar-overview` or `scholar-narrative`. Do not use bare `scholar`.
 
 **Successful Response (200 OK):**
 
@@ -167,7 +171,7 @@ curl -X POST "http://localhost:8000/summarize/" \
     "topic_name": "Medical AI Diagnostics"
   }'
 ```
-*For more detailed and realistic examples, including how to generate a literature review from a larger set of papers, see the **[cURL Examples](curl_examples.md)** file.*
+*For more detailed and realistic examples, including how to generate a literature review from a larger set of papers, see the **[cURL Examples](curl_example.md)** file.*
 
 ### Python Client Example
 
@@ -239,6 +243,8 @@ The API uses different prompts to control the style and structure of the generat
 | `concise` | A focused, narrative-style summary.                      | Quick overviews.               |
 | `two_paragraph`    | A summary split into methodology and key findings.       | Research presentations.        |
 | `lit_review`       | A 3-4 paragraph literature review (approx. 400-500 words). | Academic literature synthesis. |
+| `scholar-overview` | A two-paragraph author-centric scholar-profile overview. | Profile pages with filtered or ordered works. |
+| `scholar-narrative` | A compact single-paragraph scholar-profile narrative.   | Tighter profile UI summaries.  |
 
 #### Automatic Prompt Selection
 If you do not provide a `prompt_key` in your request, the API will automatically select one based on the number of papers submitted:
@@ -247,6 +253,44 @@ If you do not provide a `prompt_key` in your request, the API will automatically
 
 #### Custom Prompts
 You can add your own summarization strategies by editing the `system_prompts.yaml` file. Simply follow the existing format to define a new prompt.
+
+#### Scholar Profile Prompts
+Scholar-profile summaries are designed for the current visible subset of works on an author's page rather than a search-result set. When using them:
+
+-   Set `topic_name` to the author name.
+-   Include optional paper metadata such as `topics` and `contribution_roles` when available.
+-   Use `scholar-overview` for a two-paragraph profile summary.
+-   Use `scholar-narrative` for a tighter one-paragraph profile summary.
+-   Do not send `prompt_key: "scholar"`; it is rejected to avoid ambiguous behavior.
+
+### Scholar Profile Example
+
+```json
+{
+  "papers": [
+    {
+      "id": "23021531",
+      "title": "DIANA-TarBase v8: a decade-long collection of experimentally supported miRNA-gene interactions",
+      "abstract": "DIANA-TarBase v8 ... provides flexible options to different queries.",
+      "year": "2017",
+      "authors": "Dimitra Karagkouni; Maria D. Paraskevopoulou; ...; Artemis G. Hatzigeorgiou",
+      "topics": [
+        "MicroRNA in disease regulation",
+        "Cancer-related molecular mechanisms research"
+      ],
+      "contribution_roles": [
+        "Conceptualization",
+        "Data curation",
+        "Methodology"
+      ]
+    }
+  ],
+  "topic_name": "Serafeim Chatzopoulos",
+  "prompt_key": "scholar-overview"
+}
+```
+
+For a complete scholar-mode example payload, see [data-api-samples/scholar-api-papers.json](data-api-samples/scholar-api-papers.json).
 
 ---
 

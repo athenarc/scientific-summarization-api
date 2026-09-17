@@ -296,6 +296,45 @@ For a complete scholar-mode example payload, see [data-api-samples/scholar-api-p
 
 ## 📦 Deployment & Monitoring
 
+### Docker (Ubuntu API host, remote model)
+
+Run the API in Docker on Ubuntu. The model stays elsewhere — for example Ollama on a Mac Studio, or a cloud OpenAI-compatible provider. Point at it with `OPENAI_API_HOST` / `OPENAI_API_PORT` in `.env`.
+
+```bash
+# Requires a configured .env (see Configuration above)
+docker compose up --build -d
+
+# Check status / logs
+docker compose ps
+docker compose logs -f summarizer-api
+
+# Stop
+docker compose down
+```
+
+The container listens on `http://localhost:8000` by default (`HOST_PORT` overrides the host port).
+
+**Remote Ollama example** (API on Ubuntu → Ollama on another host):
+
+```env
+OPENAI_API_HOST=http://100.x.y.z
+OPENAI_API_PORT=11434
+OPENAI_API_KEY=not_needed
+MODEL=llama3.2
+```
+
+Use an address reachable from the Ubuntu machine (Tailscale/VPN IP, LAN IP, or `localhost` only if you forward the port with an SSH tunnel on the API host). Do **not** use `host.docker.internal` for a model on a different machine.
+
+On the Ollama host, bind beyond loopback if needed (e.g. `OLLAMA_HOST=0.0.0.0:11434`) and restrict access with firewall/VPN — Ollama has no built-in API auth.
+
+`system_prompts.yaml` is mounted read-only so prompt edits apply without rebuilding. App logs go to `./logs` on the host and are also rotated via the Docker `json-file` driver.
+
+#### Workers
+
+Default is **`WORKERS=1`**. You do **not** need many workers for this service.
+
+Summarization calls the model with a **blocking** OpenAI client, and each request can take a long time. Extra Gunicorn workers only help if you need several `/summarize/` requests in flight at once; they do not make a single summary faster, and they increase memory use while stacking more load on the same model. Start with 1; raise `WORKERS` (for example to `2`) only if concurrent users are waiting on each other.
+
 ### Production Deployment
 The included scripts are configured for a production-ready deployment using Gunicorn.
 

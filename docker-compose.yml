@@ -1,0 +1,25 @@
+services:
+  summarizer-api:
+    build: .
+    image: bip-scientific-summarization:latest
+    container_name: bip-summarizer-api
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      PROMPTS_FILE: system_prompts.yaml
+      # One worker is enough for low traffic. Raise only if you need concurrent
+      # /summarize/ requests (each call blocks a worker while waiting on the model).
+      WORKERS: ${WORKERS:-1}
+    volumes:
+      # Edit prompts on the host without rebuilding the image.
+      - ./system_prompts.yaml:/app/system_prompts.yaml:ro
+      - ./logs:/app/logs
+    init: true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

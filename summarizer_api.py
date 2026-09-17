@@ -119,17 +119,13 @@ class Config:
         """Build the base URL for the optional local AI client."""
         if not self.local_api_host:
             return None
-        if "localhost" in self.local_api_host or "127.0.0.1" in self.local_api_host:
-            return (
-                f"{self.local_api_host}:{self.local_api_port}/v1/"
-                if self.local_api_port
-                else f"{self.local_api_host}/v1/"
-            )
-        return (
-            f"{self.local_api_host}/v1/"
-            if not self.local_api_host.endswith("/")
-            else f"{self.local_api_host}v1/"
-        )
+        host = self.local_api_host.rstrip("/")
+        if self.local_api_port:
+            # Append port unless the host already includes one (e.g. http://host:11434).
+            after_scheme = host.split("://", 1)[-1]
+            if ":" not in after_scheme.split("/")[0]:
+                host = f"{host}:{self.local_api_port}"
+        return f"{host}/v1/"
 
     def uses_local_backend(self, model_name: str) -> bool:
         """True when this model should be served by the local backend."""

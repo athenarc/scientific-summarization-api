@@ -1,0 +1,25 @@
+# Managed by Ansible role ai_summarization_api.
+# Values come from ansible/roles/ai_summarization_api/defaults/main.yml.
+# Mirrors athenarc/scientific-summarization-api docker-compose.yml for malta.
+services:
+  ai-summarization-api:
+    build: "/opt/ai-summarization-api"
+    image: "ai-summarization-api:local"
+    container_name: "ai-summarization-api"
+    ports:
+      - "8002:8000"
+    env_file:
+      - "/opt/ai-summarization-api/.env"
+    environment:
+      PROMPTS_FILE: system_prompts.yaml
+      WORKERS: "4"
+    volumes:
+      - "/opt/ai-summarization-api/system_prompts.yaml:/app/system_prompts.yaml:ro"
+      - "/opt/ai-summarization-api/logs:/app/logs"
+    init: true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -64,9 +64,24 @@ class Config:
         self.request_timeout = int(os.getenv("REQUEST_TIMEOUT", "300"))
         self.allowed_hosts = os.getenv("ALLOWED_HOSTS", "*").split(",")
         self.cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+        # Optional comma-separated allowlist. Empty = any model name the backends accept.
+        allowed_models_raw = os.getenv("ALLOWED_MODELS", "").strip()
+        self.allowed_models = [
+            m.strip() for m in allowed_models_raw.split(",") if m.strip()
+        ] if allowed_models_raw else []
+
+        # Optional secondary backend (e.g. local Ollama) for selected model tags.
+        self.local_api_host = os.getenv("LOCAL_API_HOST", "").strip() or None
+        self.local_api_port = os.getenv("LOCAL_API_PORT", "").strip() or None
+        self.local_api_key = os.getenv("LOCAL_API_KEY", "").strip() or None
+        local_models_raw = os.getenv("LOCAL_MODELS", "").strip()
+        self.local_models = [
+            m.strip() for m in local_models_raw.split(",") if m.strip()
+        ] if local_models_raw else []
         
         self._validate_config()
         self.base_url = self._build_base_url()
+        self.local_base_url = self._build_local_base_url()
     
     def _validate_config(self):
         """Validate essential configuration variables with detailed error messages."""
@@ -84,19 +99,41 @@ class Config:
             errors.append("TOP_P must be between 0.0 and 1.0.")
         if self.max_papers <= 0:
             errors.append("MAX_PAPERS must be a positive integer.")
+        if self.local_models and not self.local_api_host:
+            errors.append("LOCAL_MODELS is set but LOCAL_API_HOST is missing.")
+        if self.local_api_host and not self.local_models:
+            errors.append("LOCAL_API_HOST is set but LOCAL_MODELS is empty.")
         
         if errors:
             error_message = "Configuration validation failed:\n" + "\n".join(f"- {error}" for error in errors)
             raise RuntimeError(error_message)
     
     def _build_base_url(self) -> str:
-        """Build the base URL for the AI client."""
+        """Build the base URL for the primary AI client."""
         if "localhost" in self.openai_api_host or "127.0.0.1" in self.openai_api_host:
             return f"{self.openai_api_host}:{self.openai_api_port}/v1/" if self.openai_api_port else f"{self.openai_api_host}/v1/"
         else:
             return f"{self.openai_api_host}/v1/" if not self.openai_api_host.endswith("/") else f"{self.openai_api_host}v1/"
 
-config = Config()
+    def _build_local_base_url(self) -> Optional[str]:
+        """Build the base URL for the optional local AI client."""
+        if not self.local_api_host:
+            return None
+        if "localhost" in self.local_api_host or "127.0.0.1" in self.local_api_host:
+            return (
+                f"{self.local_api_host}:{self.local_api_port}/v1/"
+                if self.local_api_port
+                else f"{self.local_api_host}/v1/"
+            )
+        return (
+            f"{self.local_api_host}/v1/"
+            if not self.local_api_host.endswith("/")
+            else f"{self.local_api_host}v1/"
+        )
+
+    def uses_local_backend(self, model_name: str) -> bool:
+        """True when this model should be served by the local backend."""
+        return bool(self.local_models) and model_name in self.local_models
 
 # --- Pydantic Models for Request and Response ---
 
@@ -170,6 +207,12 @@ class SummarizationRequest(BaseModel):
         description="The prompt strategy to use from system_prompts.yaml. If not specified, automatically uses 'concise' for ≤5 papers or 'lit_review' for >5 papers",
         examples=["concise", "lit_review", "two_paragraph", "scholar-overview", "scholar-narrative"]
     )
+    model: Optional[str] = Field(
+        default=None,
+        description="Override the default MODEL from the server environment for this request (e.g. an Ollama model tag)",
+        examples=["llama3.1:8b", "qwen2.5:14b", "qwen3:30b-a3b"],
+        max_length=200,
+    )
 
 class ReferenceItem(BaseModel):
     """Defines the structure for a reference item in the response."""
@@ -189,6 +232,7 @@ class SummarizationResponse(BaseModel):
     references: List[ReferenceItem] = Field(description="List of referenced papers")
     tokens_used: Optional[TokenUsage] = Field(default=None, description="Token usage statistics")
     prompt_used: str = Field(description="The prompt strategy that was used")
+    model_used: str = Field(description="The AI model that generated the summary")
     processing_time_seconds: Optional[float] = Field(default=None, description="Time taken to process the request")
 
 class HealthResponse(BaseModel):
@@ -256,7 +300,22 @@ def get_prompts_manager() -> SystemPromptsManager:
     return prompts_manager
 
 def get_ai_client() -> Client:
-    """Dependency function to get AI client."""
+    """Dependency function to get the default (primary) AI client."""
+    return ai_client
+
+
+def get_client_for_model(model_name: str) -> Client:
+    """Return the AI client that should serve the given model name."""
+    if config.uses_local_backend(model_name):
+        if local_ai_client is None:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"Model '{model_name}' is configured for the local backend, "
+                    "but LOCAL_API_HOST is not available."
+                ),
+            )
+        return local_ai_client
     return ai_client
 
 # --- Application Lifespan ---
@@ -266,7 +325,17 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Scientific Paper Summarization API")
     logger.info(f"Model: {config.model_name}")
-    logger.info(f"Base URL: {config.base_url}")
+    logger.info(
+        "Allowed models: %s",
+        ", ".join(config.allowed_models) if config.allowed_models else "(any backend model)",
+    )
+    logger.info(f"Primary base URL: {config.base_url}")
+    if config.local_base_url:
+        logger.info(
+            "Local base URL: %s | local models: %s",
+            config.local_base_url,
+            ", ".join(config.local_models),
+        )
     logger.info(f"Max papers per request: {config.max_papers}")
     
     # Validate configuration on startup
@@ -275,7 +344,11 @@ async def lifespan(app: FastAPI):
             ChatCompletionSystemMessageParam(role="system", content="You are a helpful assistant."),
             ChatCompletionUserMessageParam(role="user", content="Say 'OK' if you can respond.")
         ]
-        response, _ = generate_ai_response(ai_client, test_messages, config.model_name)
+        response, _ = generate_ai_response(
+            get_client_for_model(config.model_name),
+            test_messages,
+            config.model_name,
+        )
         logger.info("AI client validated successfully")
     except Exception as e:
         logger.warning(f"AI client validation failed: {e}")
@@ -331,12 +404,19 @@ async def log_requests(request: Request, call_next):
     
     return response
 
-# Initialize AI client
+# Initialize AI clients (primary + optional local)
 ai_client = Client(
     base_url=config.base_url,
     api_key=config.openai_api_key if config.openai_api_key else "not_needed",
     timeout=config.request_timeout
 )
+local_ai_client: Optional[Client] = None
+if config.local_base_url:
+    local_ai_client = Client(
+        base_url=config.local_base_url,
+        api_key=config.local_api_key if config.local_api_key else "not_needed",
+        timeout=config.request_timeout,
+    )
 
 # --- Exception Handlers ---
 @app.exception_handler(HTTPException)
@@ -435,6 +515,25 @@ def count_scholar_metadata_fields(papers: List[Paper]) -> Dict[str, int]:
         "contribution_roles": sum(1 for paper in papers if paper.contribution_roles),
     }
 
+def resolve_model_name(requested_model: Optional[str], config: Config) -> str:
+    """Pick the model for this request, optionally enforcing ALLOWED_MODELS."""
+    selected_model = (requested_model or config.model_name or "").strip()
+    if not selected_model:
+        raise HTTPException(
+            status_code=400,
+            detail="No model specified. Set MODEL in the environment or pass 'model' in the request body.",
+        )
+    if config.allowed_models and selected_model not in config.allowed_models:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Model '{selected_model}' is not allowed. "
+                f"Allowed models: {', '.join(config.allowed_models)}"
+            ),
+        )
+    return selected_model
+
+
 def generate_ai_response(client: Client, messages: List[ChatCompletionMessageParam], model: str) -> tuple[str, Optional[CompletionUsage]]:
     """
     Generates a response from the AI model.
@@ -503,7 +602,11 @@ async def health_check(
             ChatCompletionSystemMessageParam(role="system", content="You are a helpful assistant."),
             ChatCompletionUserMessageParam(role="user", content="Say 'OK' if you can respond.")
         ]
-        response, usage = generate_ai_response(ai_client, test_messages, config.model_name)
+        response, usage = generate_ai_response(
+            get_client_for_model(config.model_name),
+            test_messages,
+            config.model_name,
+        )
         
         return HealthResponse(
             status="healthy",
@@ -544,6 +647,61 @@ async def list_available_prompts(
         }
     }
 
+@app.get(
+    "/models",
+    tags=["Configuration"],
+    summary="List Available Models",
+    description="List models that can be selected via the optional 'model' field on /summarize/"
+)
+async def list_available_models(
+    config: Config = Depends(get_config),
+    ai_client: Client = Depends(get_ai_client),
+):
+    """List selectable models across the primary and optional local backends."""
+    primary_models: List[str] = []
+    local_models_seen: List[str] = []
+    backend_error: Optional[str] = None
+    local_error: Optional[str] = None
+
+    try:
+        listed = ai_client.models.list()
+        primary_models = sorted({item.id for item in listed.data if getattr(item, "id", None)})
+    except Exception as e:
+        backend_error = str(e)
+        logger.warning("Could not list models from primary AI backend: %s", e)
+
+    if local_ai_client is not None:
+        try:
+            listed_local = local_ai_client.models.list()
+            local_models_seen = sorted(
+                {item.id for item in listed_local.data if getattr(item, "id", None)}
+            )
+        except Exception as e:
+            local_error = str(e)
+            logger.warning("Could not list models from local AI backend: %s", e)
+
+    if config.allowed_models:
+        available = list(config.allowed_models)
+        source = "allowed_models"
+    else:
+        available = []
+        for name in [config.model_name, *primary_models, *config.local_models, *local_models_seen]:
+            if name and name not in available:
+                available.append(name)
+        source = "backends"
+
+    return {
+        "default_model": config.model_name,
+        "available_models": available,
+        "total_count": len(available),
+        "source": source,
+        "primary_models": primary_models,
+        "local_models": config.local_models,
+        "local_backend_models": local_models_seen,
+        "primary_error": backend_error,
+        "local_error": local_error,
+    }
+
 @app.post(
     "/summarize/", 
     response_model=SummarizationResponse,
@@ -569,15 +727,22 @@ async def summarize_papers_endpoint(
       * "concise" for 5 or fewer papers
       * "lit_review" for more than 5 papers
     - If prompt_key is provided, uses the specified prompt regardless of paper count
+
+    Model selection behavior:
+    - If model is omitted, uses the server MODEL environment variable
+    - If model is provided, uses that backend model name for this request
+    - If ALLOWED_MODELS is set, the chosen model must be in that list
     """
     start_time = time.time()
     requested_prompt_key = request_data.prompt_key or "auto"
+    selected_model = resolve_model_name(request_data.model, config)
     scholar_metadata_coverage = count_scholar_metadata_fields(request_data.papers)
     logger.info(
-        "Received summarization request | paper_count=%s topic_name=%r requested_prompt=%r metadata_coverage=%s",
+        "Received summarization request | paper_count=%s topic_name=%r requested_prompt=%r model=%r metadata_coverage=%s",
         len(request_data.papers),
         request_data.topic_name,
         requested_prompt_key,
+        selected_model,
         scholar_metadata_coverage
     )
     logger.info("Summarization request payload: %s", serialize_request_payload(request_data))
@@ -628,7 +793,8 @@ async def summarize_papers_endpoint(
     ai_messages = create_ai_messages(system_prompt_content, formatted_papers_string)
 
     # Generate summary
-    summary_text, usage_stats = generate_ai_response(ai_client, ai_messages, config.model_name)
+    selected_client = get_client_for_model(selected_model)
+    summary_text, usage_stats = generate_ai_response(selected_client, ai_messages, selected_model)
 
     # Build response
     references_list = [ReferenceItem(id=p.id, title=p.title) for p in request_data.papers]
@@ -643,8 +809,9 @@ async def summarize_papers_endpoint(
 
     processing_time = time.time() - start_time
     logger.info(
-        "Successfully generated summary | selected_prompt=%r topic_name=%r processing_time=%.2fs tokens=%s summary_characters=%s",
+        "Successfully generated summary | selected_prompt=%r model=%r topic_name=%r processing_time=%.2fs tokens=%s summary_characters=%s",
         selected_prompt_key,
+        selected_model,
         request_data.topic_name,
         processing_time,
         token_info.model_dump() if token_info else None,
@@ -657,5 +824,6 @@ async def summarize_papers_endpoint(
         references=references_list,
         tokens_used=token_info,
         prompt_used=selected_prompt_key,
+        model_used=selected_model,
         processing_time_seconds=round(processing_time, 3)
     )

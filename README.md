@@ -106,6 +106,7 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
 | `POST` | `/summarize/` | Generates a summary from a list of scientific papers.       |
 | `GET`  | `/health`     | Checks the service status and AI model connectivity.        |
 | `GET`  | `/prompts`    | Lists all available summarization strategies (`prompt_key`). |
+| `GET`  | `/models`     | Lists models selectable via the optional `model` request field. |
 
 ### `POST /summarize/`
 
@@ -125,13 +126,15 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
     }
   ],
   "topic_name": "Name for the Research Topic",
-  "prompt_key": "concise"
+  "prompt_key": "concise",
+  "model": "qwen2.5:14b"
 }
 ```
 
 -   **`papers`**: A list of objects, each containing `id`, `title`, and `abstract`. Scholar-profile requests may also include optional metadata such as `year`, `authors`, `topics`, and `contribution_roles`.
 -   **`topic_name`**: A descriptive name for the collection of papers. For scholar-profile requests, pass the author name here.
 -   **`prompt_key`** (Optional): The summarization strategy to use. If omitted, the API automatically selects a strategy based on the number of papers. For scholar profiles, use `scholar-overview` or `scholar-narrative`. Do not use bare `scholar`.
+-   **`model`** (Optional): Backend model name for this request. If omitted, uses the server `MODEL` env var (currently the DeepSeek default). Tags listed in `LOCAL_MODELS` are routed to `LOCAL_API_HOST` (Ollama); other names use the primary `OPENAI_API_HOST`. When `ALLOWED_MODELS` is set, the value must be in that list. See `GET /models`.
 
 **Successful Response (200 OK):**
 
@@ -149,6 +152,7 @@ Interact with the API using any HTTP client. Here are examples using cURL and Py
     "total_tokens": 770
   },
   "prompt_used": "concise",
+  "model_used": "qwen2.5:14b",
   "processing_time_seconds": 5.12
 }
 ```
@@ -222,7 +226,12 @@ The application's behavior can be fine-tuned using the following environment var
 | :---------------- | :-------------------------------------------------- | :------ | :---------- |
 | `OPENAI_API_HOST` | The base URL for the AI provider's API.             | -       | ✅          |
 | `OPENAI_API_KEY`  | Your API authentication key.                        | -       | Conditional\* |
-| `MODEL`           | The specific model identifier (e.g., `gpt-4-turbo`).  | -       | ✅          |
+| `MODEL`           | Default model identifier (e.g., `deepseek-chat`). Overridable per request. | - | ✅ |
+| `ALLOWED_MODELS`  | Optional comma-separated allowlist for the request `model` field. Empty = any backend model. | _(empty)_ | ❌ |
+| `LOCAL_API_HOST`  | Optional second backend (e.g. Ollama). Models in `LOCAL_MODELS` are routed here. | _(unset)_ | ❌ |
+| `LOCAL_API_PORT`  | Port for the local backend when using localhost/127.0.0.1. | _(unset)_ | ❌ |
+| `LOCAL_API_KEY`   | API key for the local backend (often `not_needed`). | _(unset)_ | ❌ |
+| `LOCAL_MODELS`   | Comma-separated model tags served by `LOCAL_API_HOST`. | _(empty)_ | ❌ |
 | `MAX_TOKENS`      | The maximum number of tokens to generate.           | `1000`  | ❌          |
 | `TEMPERATURE`     | Model creativity (0.0 to 2.0).                      | `0.7`   | ❌          |
 | `TOP_P`           | Nucleus sampling parameter (0.0 to 1.0).            | `0.95`  | ❌          |

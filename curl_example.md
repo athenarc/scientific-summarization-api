@@ -24,6 +24,13 @@ Get a list of all supported summarization strategies (`prompt_key` values).
 curl "http://localhost:8000/prompts" | jq
 ```
 
+#### List Available Models
+See which models you can pass as `"model"` on `/summarize/` (default + allowlist / backend inventory).
+
+```bash
+curl "http://localhost:8000/models" | jq
+```
+
 ---
 
 ## 2. Generating Summaries
@@ -129,6 +136,27 @@ curl -X POST "http://localhost:8000/summarize/" \
     ],
     "topic_name": "Deep Learning for Time Series",
     "prompt_key": "two_paragraph"
+  }' | jq
+```
+
+## 3b. Choosing a Model Per Request
+
+Pass `"model"` to override the server default (useful with local Ollama). Response includes `model_used`.
+
+```bash
+curl -X POST "http://localhost:8000/summarize/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "papers": [
+      {
+        "id": "neuro_01",
+        "title": "Neural Networks for Advanced Time Series Prediction",
+        "abstract": "We propose a novel neural network architecture for time series forecasting that effectively combines LSTM layers with attention mechanisms."
+      }
+    ],
+    "topic_name": "Deep Learning for Time Series",
+    "prompt_key": "concise",
+    "model": "llama3.1:8b"
   }' | jq
 ```
 

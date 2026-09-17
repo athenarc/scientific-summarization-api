@@ -206,7 +206,7 @@ class SummarizationRequest(BaseModel):
     model: Optional[str] = Field(
         default=None,
         description="Override the default MODEL from the server environment for this request (e.g. an Ollama model tag)",
-        examples=["llama3.1:8b", "qwen2.5:14b", "qwen3:30b-a3b"],
+        examples=["llama3.1:8b", "qwen2.5:14b", "qwen3:30b-a3b-instruct-2507-q4_K_M"],
         max_length=200,
     )
 

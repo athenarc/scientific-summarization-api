@@ -53,6 +53,11 @@ prompts:
       - Use only the provided papers as sources
       - Integrate citations naturally into the text
 
+      Output format:
+      - Begin directly with the summary text
+      - Do NOT write any preamble, meta-commentary, or framing (e.g. "Here's a summary...", "Below is...", "In this overview...")
+      - Do NOT add titles, headings, or closing remarks
+
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided metadata and abstracts.
 
   scholar-narrative:
@@ -111,6 +116,11 @@ prompts:
       - Use only the provided papers as sources
       - Integrate citations naturally into the text
 
+      Output format:
+      - Begin directly with the summary text
+      - Do NOT write any preamble, meta-commentary, or framing (e.g. "Here's a summary...", "Below is...", "In this overview...")
+      - Do NOT add titles, headings, or closing remarks
+
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided metadata and abstracts.
   concise:
     name: "Concise Summary"
@@ -155,6 +165,11 @@ prompts:
       - Multiple citations should maintain original IDs and be listed in ascending order: [31234,45678,52431]
       - Use only the provided papers as sources
       - Integrate citations naturally into the text
+
+      Output format:
+      - Begin directly with the summary text
+      - Do NOT write any preamble, meta-commentary, or framing (e.g. "Here's a focused single-paragraph summary...", "Here's a summary...", "Below is...")
+      - Do NOT add titles, headings, or closing remarks
 
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.
 
@@ -208,6 +223,11 @@ prompts:
       - Avoid excessive citation clustering
       - Do not modify, simplify, or renumber the original paper IDs
 
+      Output format:
+      - Begin directly with the summary text
+      - Do NOT write any preamble, meta-commentary, or framing (e.g. "Here's a summary...", "Below is a literature review...", "In this review...")
+      - Do NOT add titles, headings, or closing remarks
+
       Begin directly with the content, avoiding any headers, labels, or formatting markers. Maintain academic integrity while avoiding information not present in the provided abstracts.
   two_paragraph:
     name: "Two-Paragraph Summary"
@@ -250,5 +270,10 @@ prompts:
       - Avoid elaboration on minor points
       - Use precise language instead of lengthy descriptions
       - Eliminate redundant citations when multiple sources support the same point
+
+      Output format:
+      - Begin directly with the summary text
+      - Do NOT write any preamble, meta-commentary, or framing (e.g. "Here's a summary...", "Below is...", "In these two paragraphs...")
+      - Do NOT add titles, headings, or closing remarks
 
       Synthesize the information while maintaining academic integrity and avoiding information not present in the provided abstracts.

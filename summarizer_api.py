@@ -496,11 +496,10 @@ def build_prompt_input(prompt_key: str, topic_name: str, papers: List[Paper]) ->
     return format_papers_for_prompt(papers)
 
 def serialize_request_payload(request_data: SummarizationRequest) -> str:
-    """Serialize the validated request payload for logging."""
-    return json.dumps(
-        request_data.model_dump(mode="json", exclude_none=True),
-        ensure_ascii=False
-    )
+    """Serialize the validated request payload for logging (papers: id only)."""
+    payload = request_data.model_dump(mode="json", exclude_none=True)
+    payload["papers"] = [{"id": paper["id"]} for paper in payload.get("papers", [])]
+    return json.dumps(payload, ensure_ascii=False)
 
 def count_scholar_metadata_fields(papers: List[Paper]) -> Dict[str, int]:
     """Count optional scholar metadata coverage across the provided papers."""
